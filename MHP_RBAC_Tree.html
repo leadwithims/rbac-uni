@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MHP RBAC Policy Tree</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3347;
+    --accent: #4f7cff;
+    --accent2: #7c5cfc;
+    --text: #e8eaf6;
+    --text2: #8b8fa8;
+    --green: #3ecf8e;
+    --amber: #f5a623;
+    --red: #f06060;
+    --purple: #a78bfa;
+    --teal: #2dd4bf;
+    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+    --font-sans: 'DM Sans', system-ui, sans-serif;
+    --radius: 10px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Google Fonts */
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+
+  .logo {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .header-title {
+    font-size: 14px;
+    color: var(--text2);
+  }
+
+  .header-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+  }
+
+  button {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    padding: 7px 14px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-weight: 500;
+  }
+
+  button:hover { background: var(--border); border-color: var(--accent); color: var(--accent); }
+
+  button.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  button.primary:hover { background: #6b91ff; }
+
+  .workspace {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    height: calc(100vh - 53px);
+  }
+
+  /* EDITOR PANEL */
+  .editor-panel {
+    width: 400px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .panel-header {
+    padding: 10px 16px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .panel-header .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--green);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  #editor {
+    flex: 1;
+    resize: none;
+    border: none;
+    outline: none;
+    background: var(--surface);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    line-height: 1.7;
+    padding: 16px;
+    overflow-y: auto;
+    tab-size: 2;
+  }
+
+  .editor-footer {
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  #error-msg {
+    color: var(--red);
+    font-size: 12px;
+    flex: 1;
+  }
+
+  /* PREVIEW PANEL */
+  .preview-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .preview-toolbar {
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+
+  .theme-toggle {
+    display: flex;
+    gap: 4px;
+    background: var(--bg);
+    border-radius: 6px;
+    padding: 3px;
+  }
+
+  .theme-toggle button {
+    border: none;
+    background: transparent;
+    padding: 4px 10px;
+    font-size: 12px;
+    border-radius: 4px;
+    color: var(--text2);
+  }
+
+  .theme-toggle button.active {
+    background: var(--surface2);
+    color: var(--text);
+  }
+
+  .zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  .zoom-controls button {
+    padding: 4px 10px;
+    font-size: 14px;
+    border-radius: 4px;
+  }
+
+  #zoom-level {
+    min-width: 40px;
+    text-align: center;
+    font-size: 12px;
+  }
+
+  #preview {
+    flex: 1;
+    overflow: auto;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 32px;
+    background: var(--bg);
+    cursor: grab;
+  }
+
+  #preview:active { cursor: grabbing; }
+
+  #diagram-container {
+    transform-origin: top center;
+    transition: transform 0.15s;
+  }
+
+  #diagram-container svg {
+    max-width: none !important;
+    border-radius: var(--radius);
+  }
+
+  /* Legend sidebar */
+  .legend {
+    position: absolute;
+    right: 16px;
+    bottom: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    font-size: 12px;
+    min-width: 180px;
+  }
+
+  .legend h4 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text2);
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 7px;
+    color: var(--text2);
+  }
+
+  .legend-dot {
+    width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0;
+  }
+
+  .preview-wrap {
+    position: relative;
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Mermaid theme overrides */
+  .mermaid-light { background: #f8fafc; }
+
+  .snippets {
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+  }
+
+  .snippets h4 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text2);
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+
+  .snippet-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .snippet-btn {
+    font-size: 11px;
+    padding: 5px 8px;
+    border-radius: 5px;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text2);
+    border-color: var(--border);
+  }
+
+  .snippet-btn:hover { color: var(--accent); }
+
+  /* copy button */
+  #copy-btn { position: relative; }
+
+  #toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: var(--green);
+    color: #000;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    opacity: 0;
+    transition: all 0.25s;
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">MHP RBAC</div>
+  <div class="header-title">Role-Based Access Control — Policy Tree</div>
+  <div class="header-actions">
+    <button onclick="copyMermaid()" id="copy-btn">Copy Mermaid</button>
+    <button onclick="exportSVG()">Export SVG</button>
+    <button class="primary" onclick="renderDiagram()">Render</button>
+  </div>
+</header>
+
+<div class="workspace">
+
+  <!-- EDITOR -->
+  <div class="editor-panel">
+    <div class="panel-header">
+      <div class="dot"></div>
+      Mermaid source — editable
+    </div>
+    <textarea id="editor" spellcheck="false">graph TD
+
+  %% ── ROLE HIERARCHY ──────────────────────────────────────
+  ANON["👤 Anonymous user"]:::roleAnon
+  EXT["👥 External viewer"]:::roleExt
+  EMP["🏢 Employee"]:::roleEmp
+  EDITOR["✏️  Media editor"]:::roleSpec
+  MOD["🛡️  Moderator"]:::roleSpec
+  ADMIN["⚙️  Administrator"]:::roleAdmin
+  EMERG["🚨 Admin · Emergency"]:::roleEmerg
+
+  %% ── HIERARCHY LINKS ──────────────────────────────────────
+  ANON -->|"registers"| EXT
+  EXT  -->|"is employee"| EMP
+  EMP  -->|"specialised"| EDITOR
+  EMP  -->|"specialised"| MOD
+  EMP  -.->|"separate branch"| ADMIN
+  ADMIN -->|"emergency mode"| EMERG
+
+  %% ── ANONYMOUS PERMISSIONS ────────────────────────────────
+  subgraph SG_ANON["Anonymous permissions"]
+    direction LR
+    P_VIEW_PUB["view · public media"]:::permView
+  end
+  ANON --> SG_ANON
+
+  %% ── EXTERNAL VIEWER PERMISSIONS ──────────────────────────
+  subgraph SG_EXT["External viewer permissions  (+ inherits Anonymous)"]
+    direction LR
+    P_LIKE_PUB["like · public media"]:::permInteract
+    P_CMT_PUB["comment · public media"]:::permInteract
+    P_UPD_OWN["update · own account info"]:::permAccount
+    P_LOGIN["login · platform"]:::permAuth
+    P_LOGOUT["logout · platform"]:::permAuth
+  end
+  EXT --> SG_EXT
+
+  %% ── EMPLOYEE PERMISSIONS ─────────────────────────────────
+  subgraph SG_EMP["Employee permissions  (+ inherits Ext. Viewer)"]
+    direction LR
+    P_VIEW_INT["view · internal media"]:::permView
+    P_LIKE_INT["like · internal media"]:::permInteract
+    P_CMT_INT["comment · internal media"]:::permInteract
+    P_UPLOAD_P["upload · personal channel"]:::permContent
+    P_SHARE["share · internal media"]:::permContent
+    P_SUB["subscribe · dept channel"]:::permInteract
+  end
+  EMP --> SG_EMP
+
+  %% ── EDITOR PERMISSIONS ───────────────────────────────────
+  subgraph SG_EDITOR["Media editor permissions  (+ inherits Employee)"]
+    direction LR
+    P_UPLOAD_D["upload · dept channel"]:::permContent
+    P_EDIT["edit · dept media"]:::permContent
+    P_VIS["manage visibility"]:::permContent
+    P_SCHED["schedule publication"]:::permContent
+    P_DELETE["delete · dept media"]:::permContent
+  end
+  EDITOR --> SG_EDITOR
+
+  %% ── MODERATOR PERMISSIONS ────────────────────────────────
+  subgraph SG_MOD["Moderator permissions  (+ inherits Employee)"]
+    direction LR
+    P_MON_V["monitor · videos"]:::permMod
+    P_MON_C["monitor · comments"]:::permMod
+    P_SUSP_M["suspend · media"]:::permMod
+  end
+  MOD --> SG_MOD
+
+  %% ── ADMIN PERMISSIONS ────────────────────────────────────
+  subgraph SG_ADMIN["Administrator permissions"]
+    direction LR
+    P_CREATE_A["create · user account"]:::permAdmin
+    P_UPD_A["update · user account"]:::permAdmin
+    P_SUSP_A["suspend · user account"]:::permAdmin
+    P_LOG["log · admin/mod actions"]:::permAuth
+  end
+  ADMIN --> SG_ADMIN
+
+  %% ── EMERGENCY PERMISSIONS ────────────────────────────────
+  subgraph SG_EMERG["Emergency admin permissions  (full access)"]
+    direction LR
+    P_VIEW_ALL["view · ALL media"]:::permEmerg
+    P_SUSP_ANY["suspend · any account or media"]:::permEmerg
+    P_FULL["full platform access"]:::permEmerg
+  end
+  EMERG --> SG_EMERG
+
+  %% ── CROSS-CUTTING DENIES ─────────────────────────────────
+  subgraph SG_DENY["Explicit DENY  (all roles)"]
+    direction LR
+    D_NICK["✗ update · login nickname"]:::permDeny
+    D_MAINT["✗ write ops during maintenance"]:::permDeny
+  end
+
+  %% ── STYLES ───────────────────────────────────────────────
+  classDef roleAnon  fill:#3d3d3a,stroke:#888780,color:#e8e8e2,rx:8
+  classDef roleExt   fill:#0c447c,stroke:#185FA5,color:#B5D4F4,rx:8
+  classDef roleEmp   fill:#27500a,stroke:#3B6D11,color:#C0DD97,rx:8
+  classDef roleSpec  fill:#633806,stroke:#854F0B,color:#FAC775,rx:8
+  classDef roleAdmin fill:#72243E,stroke:#993556,color:#F4C0D1,rx:8
+  classDef roleEmerg fill:#791F1F,stroke:#A32D2D,color:#F7C1C1,rx:8
+
+  classDef permView     fill:#2a3d52,stroke:#185FA5,color:#B5D4F4
+  classDef permInteract fill:#1e3d2f,stroke:#3B6D11,color:#C0DD97
+  classDef permContent  fill:#3d2c10,stroke:#854F0B,color:#FAC775
+  classDef permMod      fill:#3d2c10,stroke:#BA7517,color:#FAC775
+  classDef permAccount  fill:#2a1f38,stroke:#7F77DD,color:#CECBF6
+  classDef permAdmin    fill:#3a1228,stroke:#993556,color:#F4C0D1
+  classDef permAuth     fill:#1a2040,stroke:#534AB7,color:#AFA9EC
+  classDef permEmerg    fill:#3a0f0f,stroke:#A32D2D,color:#F7C1C1
+  classDef permDeny     fill:#2a0f0f,stroke:#E24B4A,color:#F09595
+</textarea>
+
+    <div class="snippets">
+      <h4>Quick insert snippets</h4>
+      <div class="snippet-grid">
+        <button class="snippet-btn" onclick="insertSnippet('new-role')">+ New role</button>
+        <button class="snippet-btn" onclick="insertSnippet('new-perm')">+ New permission</button>
+        <button class="snippet-btn" onclick="insertSnippet('new-subgraph')">+ Permission group</button>
+        <button class="snippet-btn" onclick="insertSnippet('deny')">+ DENY rule</button>
+      </div>
+    </div>
+
+    <div class="editor-footer">
+      <span id="error-msg"></span>
+      <span id="char-count" style="margin-left:auto;font-family:var(--font-mono);font-size:11px"></span>
+    </div>
+  </div>
+
+  <!-- PREVIEW -->
+  <div class="preview-wrap">
+    <div class="preview-toolbar">
+      <span style="font-size:12px;color:var(--text2);">Preview</span>
+      <div class="theme-toggle">
+        <button class="active" onclick="setTheme('dark', this)">Dark</button>
+        <button onclick="setTheme('light', this)">Light</button>
+      </div>
+      <div class="zoom-controls">
+        <button onclick="zoom(-0.1)">−</button>
+        <span id="zoom-level">100%</span>
+        <button onclick="zoom(0.1)">+</button>
+        <button onclick="resetZoom()">Reset</button>
+      </div>
+    </div>
+
+    <div id="preview">
+      <div id="diagram-container">
+        <div id="mermaid-output"></div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <h4>Legend</h4>
+      <div class="legend-item"><div class="legend-dot" style="background:#888780"></div>Role node</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#185FA5"></div>View permission</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#3B6D11"></div>Interact permission</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#854F0B"></div>Content / moderation</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#7F77DD"></div>Account permission</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#534AB7"></div>Auth / logging</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#993556"></div>Admin permission</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#A32D2D"></div>Emergency access</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#E24B4A"></div>Explicit DENY</div>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast">Copied to clipboard!</div>
+
+<script>
+let currentTheme = 'dark';
+let currentZoom = 1;
+
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'dark',
+  themeVariables: {
+    darkMode: true,
+    background: '#0f1117',
+    primaryColor: '#1a1d27',
+    primaryTextColor: '#e8eaf6',
+    primaryBorderColor: '#2e3347',
+    lineColor: '#4f7cff',
+    secondaryColor: '#22263a',
+    tertiaryColor: '#22263a',
+    fontSize: '14px',
+    fontFamily: 'DM Sans, system-ui, sans-serif',
+    edgeLabelBackground: '#1a1d27',
+    clusterBkg: '#1a1d27',
+    clusterBorder: '#2e3347',
+    subGraphTitleColor: '#8b8fa8',
+    titleColor: '#e8eaf6',
+    nodeTextColor: '#e8eaf6',
+  },
+  flowchart: {
+    curve: 'basis',
+    padding: 20,
+    nodeSpacing: 40,
+    rankSpacing: 60,
+    useMaxWidth: false,
+  }
+});
+
+async function renderDiagram() {
+  const src = document.getElementById('editor').value;
+  const out = document.getElementById('mermaid-output');
+  const err = document.getElementById('error-msg');
+  err.textContent = '';
+  try {
+    const id = 'rbac-' + Date.now();
+    const { svg } = await mermaid.render(id, src);
+    out.innerHTML = svg;
+    out.querySelector('svg').style.maxWidth = 'none';
+  } catch(e) {
+    err.textContent = 'Syntax error — check your Mermaid syntax';
+    console.error(e);
+  }
+}
+
+function setTheme(theme, btn) {
+  currentTheme = theme;
+  document.querySelectorAll('.theme-toggle button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const isDark = theme === 'dark';
+  document.getElementById('preview').style.background = isDark ? 'var(--bg)' : '#f0f4f8';
+
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: isDark ? 'dark' : 'default',
+    themeVariables: isDark ? {
+      darkMode: true,
+      background: '#0f1117',
+      primaryColor: '#1a1d27',
+      primaryTextColor: '#e8eaf6',
+      primaryBorderColor: '#2e3347',
+      lineColor: '#4f7cff',
+      secondaryColor: '#22263a',
+      tertiaryColor: '#22263a',
+      fontSize: '14px',
+      fontFamily: 'DM Sans, system-ui, sans-serif',
+      edgeLabelBackground: '#1a1d27',
+      clusterBkg: '#1a1d27',
+      clusterBorder: '#2e3347',
+      subGraphTitleColor: '#8b8fa8',
+    } : {
+      fontSize: '14px',
+      fontFamily: 'DM Sans, system-ui, sans-serif',
+      primaryColor: '#e8f4fd',
+      primaryBorderColor: '#185FA5',
+      lineColor: '#185FA5',
+    },
+    flowchart: { curve: 'basis', padding: 20, nodeSpacing: 40, rankSpacing: 60, useMaxWidth: false }
+  });
+  renderDiagram();
+}
+
+function zoom(delta) {
+  currentZoom = Math.min(2.5, Math.max(0.3, currentZoom + delta));
+  document.getElementById('diagram-container').style.transform = `scale(${currentZoom})`;
+  document.getElementById('zoom-level').textContent = Math.round(currentZoom * 100) + '%';
+}
+
+function resetZoom() {
+  currentZoom = 1;
+  document.getElementById('diagram-container').style.transform = 'scale(1)';
+  document.getElementById('zoom-level').textContent = '100%';
+}
+
+function copyMermaid() {
+  navigator.clipboard.writeText(document.getElementById('editor').value).then(() => {
+    const t = document.getElementById('toast');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2000);
+  });
+}
+
+function exportSVG() {
+  const svg = document.querySelector('#mermaid-output svg');
+  if (!svg) { alert('Render the diagram first.'); return; }
+  const blob = new Blob([svg.outerHTML], { type: 'image/svg+xml' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'MHP_RBAC_Tree.svg';
+  a.click();
+}
+
+const snippets = {
+  'new-role': '\n  NEWROLE["🔹 New role"]:::roleSpec\n  PARENT -->|"extends"| NEWROLE',
+  'new-perm': '    P_NEW["action · resource"]:::permView',
+  'new-subgraph': '\n  subgraph SG_NEW["New permission group"]\n    direction LR\n    P_NEW["action · resource"]:::permView\n  end\n  ROLE --> SG_NEW',
+  'deny': '    D_NEW["✗ deny · action · resource"]:::permDeny',
+};
+
+function insertSnippet(key) {
+  const ta = document.getElementById('editor');
+  const val = snippets[key];
+  const pos = ta.selectionStart;
+  ta.value = ta.value.slice(0, pos) + val + ta.value.slice(pos);
+  ta.focus();
+  ta.selectionStart = ta.selectionEnd = pos + val.length;
+  updateCharCount();
+}
+
+function updateCharCount() {
+  const len = document.getElementById('editor').value.length;
+  document.getElementById('char-count').textContent = len + ' chars';
+}
+
+document.getElementById('editor').addEventListener('input', updateCharCount);
+
+document.getElementById('editor').addEventListener('keydown', e => {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const ta = e.target;
+    const s = ta.selectionStart;
+    ta.value = ta.value.slice(0, s) + '  ' + ta.value.slice(ta.selectionEnd);
+    ta.selectionStart = ta.selectionEnd = s + 2;
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    renderDiagram();
+  }
+});
+
+window.addEventListener('load', () => {
+  updateCharCount();
+  renderDiagram();
+});
+</script>
+</body>
+</html>
