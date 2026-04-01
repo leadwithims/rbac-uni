@@ -10,8 +10,7 @@ This project models the access-control policy of an internal media platform usin
 
 | Role | Inherits from | Description |
 |---|---|---|
-| Anonymous | — | Unauthenticated visitor |
-| External Viewer | Anonymous | Registered external user |
+| External Viewer | — | Registered external user |
 | Employee | External Viewer | Internal staff member |
 | Media Editor | Employee | Manages departmental media |
 | Moderator | Employee | Monitors and enforces policy |
@@ -24,7 +23,6 @@ This project models the access-control policy of an internal media platform usin
 graph TD
 
   %% ── ROLE HIERARCHY ──────────────────────────────────────
-  ANON["👤 Anonymous user"]:::roleAnon
   EXT["👥 External viewer"]:::roleExt
   EMP["🏢 Employee"]:::roleEmp
   EDITOR["✏️  Media editor"]:::roleSpec
@@ -33,23 +31,16 @@ graph TD
   EMERG["🚨 Admin · Emergency"]:::roleEmerg
 
   %% ── HIERARCHY LINKS ──────────────────────────────────────
-  ANON -->|"registers"| EXT
   EXT  -->|"is employee"| EMP
   EMP  -->|"specialised"| EDITOR
   EMP  -->|"specialised"| MOD
   EMP  -.->|"separate branch"| ADMIN
   ADMIN -->|"emergency mode"| EMERG
 
-  %% ── ANONYMOUS PERMISSIONS ────────────────────────────────
-  subgraph SG_ANON["Anonymous permissions"]
+  %% ── EXTERNAL VIEWER PERMISSIONS ──────────────────────────
+  subgraph SG_EXT["External viewer permissions"]
     direction LR
     P_VIEW_PUB["view · public media"]:::permView
-  end
-  ANON --> SG_ANON
-
-  %% ── EXTERNAL VIEWER PERMISSIONS ──────────────────────────
-  subgraph SG_EXT["External viewer permissions  (+ inherits Anonymous)"]
-    direction LR
     P_LIKE_PUB["like · public media"]:::permInteract
     P_CMT_PUB["comment · public media"]:::permInteract
     P_UPD_OWN["update · own account info"]:::permAccount
@@ -77,7 +68,6 @@ graph TD
     P_EDIT["edit · dept media"]:::permContent
     P_VIS["manage visibility"]:::permContent
     P_SCHED["schedule publication"]:::permContent
-    P_DELETE["delete · dept media"]:::permContent
   end
   EDITOR --> SG_EDITOR
 
@@ -86,7 +76,7 @@ graph TD
     direction LR
     P_MON_V["monitor · videos"]:::permMod
     P_MON_C["monitor · comments"]:::permMod
-    P_SUSP_M["suspend · media"]:::permMod
+    P_REPORT["report abuse · scoped media"]:::permMod
   end
   MOD --> SG_MOD
 
@@ -116,12 +106,13 @@ graph TD
     D_MAINT["✗ write ops during maintenance"]:::permDeny
   end
 
-  classDef roleAnon  fill:#3d3d3a,stroke:#888780,color:#e8e8e2,rx:8
+  %% ── STYLES ───────────────────────────────────────────────
   classDef roleExt   fill:#0c447c,stroke:#185FA5,color:#B5D4F4,rx:8
   classDef roleEmp   fill:#27500a,stroke:#3B6D11,color:#C0DD97,rx:8
   classDef roleSpec  fill:#633806,stroke:#854F0B,color:#FAC775,rx:8
   classDef roleAdmin fill:#72243E,stroke:#993556,color:#F4C0D1,rx:8
   classDef roleEmerg fill:#791F1F,stroke:#A32D2D,color:#F7C1C1,rx:8
+
   classDef permView     fill:#2a3d52,stroke:#185FA5,color:#B5D4F4
   classDef permInteract fill:#1e3d2f,stroke:#3B6D11,color:#C0DD97
   classDef permContent  fill:#3d2c10,stroke:#854F0B,color:#FAC775
