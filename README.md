@@ -74,8 +74,6 @@ graph TD
   %% ── MODERATOR PERMISSIONS ────────────────────────────────
   subgraph SG_MOD["Moderator permissions  (+ inherits Employee)"]
     direction LR
-    P_MON_V["monitor · videos"]:::permMod
-    P_MON_C["monitor · comments"]:::permMod
     P_REPORT["report abuse · scoped media"]:::permMod
   end
   MOD --> SG_MOD
