@@ -1,7 +1,6 @@
 graph TD
 
   %% ── ROLE HIERARCHY ──────────────────────────────────────
-  ANON["👤 Anonymous user"]:::roleAnon
   EXT["👥 External viewer"]:::roleExt
   EMP["🏢 Employee"]:::roleEmp
   EDITOR["✏️  Media editor"]:::roleSpec
@@ -10,23 +9,16 @@ graph TD
   EMERG["🚨 Admin · Emergency"]:::roleEmerg
 
   %% ── HIERARCHY LINKS ──────────────────────────────────────
-  ANON -->|"registers"| EXT
   EXT  -->|"is employee"| EMP
   EMP  -->|"specialised"| EDITOR
   EMP  -->|"specialised"| MOD
   EMP  -.->|"separate branch"| ADMIN
   ADMIN -->|"emergency mode"| EMERG
 
-  %% ── ANONYMOUS PERMISSIONS ────────────────────────────────
-  subgraph SG_ANON["Anonymous permissions"]
+  %% ── EXTERNAL VIEWER PERMISSIONS ──────────────────────────
+  subgraph SG_EXT["External viewer permissions"]
     direction LR
     P_VIEW_PUB["view · public media"]:::permView
-  end
-  ANON --> SG_ANON
-
-  %% ── EXTERNAL VIEWER PERMISSIONS ──────────────────────────
-  subgraph SG_EXT["External viewer permissions  (+ inherits Anonymous)"]
-    direction LR
     P_LIKE_PUB["like · public media"]:::permInteract
     P_CMT_PUB["comment · public media"]:::permInteract
     P_UPD_OWN["update · own account info"]:::permAccount
@@ -94,7 +86,6 @@ graph TD
   end
 
   %% ── STYLES ───────────────────────────────────────────────
-  classDef roleAnon  fill:#3d3d3a,stroke:#888780,color:#e8e8e2,rx:8
   classDef roleExt   fill:#0c447c,stroke:#185FA5,color:#B5D4F4,rx:8
   classDef roleEmp   fill:#27500a,stroke:#3B6D11,color:#C0DD97,rx:8
   classDef roleSpec  fill:#633806,stroke:#854F0B,color:#FAC775,rx:8
