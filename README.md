@@ -129,6 +129,7 @@ graph TD
 | [`MHP_RBAC_Tree.html`](./MHP_RBAC_Tree.html) | Interactive live diagram with Mermaid editor |
 | [`rbac-diagram.mmd`](./rbac-diagram.mmd) | Raw Mermaid source file |
 | [`rbac-diagram.svg`](./rbac-diagram.svg) | Static SVG export of the diagram |
+| [`mhp-abac-policy.md`](./mhp-abac-policy.md) | ABAC attribute catalog, permit/deny rules, DSOD and emergency constraints |
 
 ## Cross-cutting DENY rules
 
